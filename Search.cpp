@@ -38,7 +38,10 @@ void Search::startSearch()
     useHashTable = false;
 
 
-    if (!aStar())
+    /*if (!aStar())
+        printStats();*/
+
+    if (!aStar(Priority::heuristic))
         printStats();
 
     // DFS
@@ -197,7 +200,7 @@ bool Search::aStar(Priority priority)
     while (!minOpen.isEmpty())
     {
         Node* currentNode = minOpen.removeMin();
-        //std::cout << currentNode->toString();
+        std::cout << currentNode->toString();
         if (currentNode->isSolution())
         {
             printStats(currentNode);

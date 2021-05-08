@@ -6,9 +6,9 @@ int main()
 {
     //     INSTANCIA EXEMPLO
     /*char state[] = "...D....C..BE....CA.....E............A....B...D..";
-    NumberLink* test = new NumberLink(state, 7, 7);*/
+    NumberLink* netManDist = new NumberLink(state, 7, 7);*/
 
-    NumberLink* state = new NumberLink(12);
+    NumberLink* state = new NumberLink(9);
     Search search(state);
     delete state;
 
