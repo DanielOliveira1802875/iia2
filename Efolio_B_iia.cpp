@@ -8,7 +8,7 @@ int main()
     /*char state[] = "...D....C..BE....CA.....E............A....B...D..";
     NumberLink* netManDist = new NumberLink(state, 7, 7);*/
 
-    NumberLink* state = new NumberLink(9);
+    NumberLink* state = new NumberLink(8);
     Search search(state);
     delete state;
 

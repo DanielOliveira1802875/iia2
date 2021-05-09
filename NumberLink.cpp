@@ -172,7 +172,9 @@ int NumberLink::netManDist(int* positions, int size, int* islands_)
     for (int i = 0; i < size - 1; i++)
     {
         for (int j = i + 1; j < size; j++)
+        {            
             connections.addValue(Connection(calcManhattanDistance(positions[i], positions[j]), i, j));
+        }
     }
     while (!connections.isEmpty())
     {
@@ -222,13 +224,12 @@ void NumberLink::resetState()
 
 int NumberLink::calcCurrentNumberManhattanDistance(NumberLink* _state)
 {
-    int total = netManDist(_state->pos, _state->posSize, _state->islands);
-    //std::cout << toString(_state->state) << std::endl << total << std::endl;
+    int total = netManDist(_state->pos, _state->posSize, _state->islands);    
     return total;
 }
 
 int NumberLink::calcManhattanDistance(int startPosition, int endPosition)
-{
+{    
     const int horizontalDistance = abs(startPosition % qntColumns - endPosition % qntColumns);
     const int verticalDistance = abs(startPosition / qntColumns - endPosition / qntColumns);
     // o objetivo é estar conexo com o destino e não coincidir com ele, dai o -1
@@ -247,8 +248,15 @@ int NumberLink::remainingManhattanDistances()
 void NumberLink::updateSuccessorStats(NumberLink* successor)
 {
     if (priority == Priority::cost) return;
-    successor->heuristic = calcCurrentNumberManhattanDistance(successor);
-    successor->heuristic += remainingManhattanDistances();
+    int thisheu = calcCurrentNumberManhattanDistance(successor);
+    int restheu = remainingManhattanDistances();
+    successor->heuristic = thisheu + restheu;
+    if(successor->heuristic <= 19)
+    {
+        std::cout << toString(successor->state) << std::endl;
+        std::cout << successor->heuristic << std::endl;
+    }
+
 }
 
 
@@ -283,7 +291,7 @@ void NumberLink::genSuccessors(DLList<Node*>& successors)
             successor->pos[posSize] = around[i];
             successor->islands[posSize] = islands[occurrenceIndex];
             successor->posSize++;
-            if (successor->isSelfConnectingPath() ||  successor->isDeadState() || successor->is360V2())
+            if (/*successor->isSelfConnectingPath() ||*/  successor->isDeadState() /*|| successor->is360V2()*/)
                 delete successor;
             else
             {
@@ -308,7 +316,7 @@ void NumberLink::genSuccessors(DLList<Node*>& successors)
                 successor->islands[posSize] = islands[j];
                 successor->posSize++;
 
-                if (successor->isSelfConnectingPath() || successor->isDeadState() || successor->is360V2())
+                if (/*successor->isSelfConnectingPath() ||*/ successor->isDeadState() /*|| successor->is360V2()*/)
                     delete successor;
                 else
                 {
@@ -339,10 +347,24 @@ bool NumberLink::operator>(Node& node)
     return false;
 }
 
+bool NumberLink::operator>=(Node& node)
+{
+    if (getPriority() >= ((NumberLink&)node).getPriority())
+        return true;
+    return false;
+}
+
 
 bool NumberLink::operator<(Node& node)
 {
     if (getPriority() < ((NumberLink&)node).getPriority())
+        return true;
+    return false;
+}
+
+bool NumberLink::operator<=(Node& node)
+{
+    if (getPriority() <= ((NumberLink&)node).getPriority())
         return true;
     return false;
 }
@@ -361,12 +383,10 @@ void NumberLink::loadInstace(int number)
     const char inst5[] = "............A....B....B.CD.A..C........D";
     const char inst6[] = "D........C..A....B....B....A..C........D";
     const char inst7[] = "C..............D.BA............DA........E...B..E.......C...";
-    const char inst8[] =
-        "D.............D..C.....A...........B...............C.....A..............AB...B.......C......D.......";
-    //const char inst9[] = "........A.............A...................................A.A.................................A.....";
-    const char inst9[] =
-        ".A......A.....A.......A.....A......A......A..............A.A.............A...................A.....";
-    const char inst10[] = "............BC..D......D.E..............F.E.G........................H..ABCAHF..G";
+    const char inst8[] = "D.............D..C.....A...........B...............C.....A..............AB...B.......C......D.......";
+    const char inst9[] = "........A.............A...................................A.A.................................A.....";
+    //const char inst9[] = ".A......A.....A.......A.....A......A......A..............A.A.............A...................A.....";
+    const char inst10[] = "...........BABABABA............ABABABAB......................BABABABA............ABABABAB...........";
     const char inst11[] =
         "..........A..BA.HI..........I....G..F.E...F..H..JCBE........C.....G.J.D..................D..........";
     const char inst12[] =
@@ -437,8 +457,8 @@ void NumberLink::loadInstace(int number)
         memcpy(state, inst9, static_cast<size_t>(outOfBoundsPosition));
         break;
     case 10:
-        qntLines = 9;
-        qntColumns = 9;
+        qntLines = 10;
+        qntColumns = 10;
         outOfBoundsPosition = qntColumns * qntLines;
         this->state = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
         memcpy(state, inst10, static_cast<size_t>(outOfBoundsPosition));

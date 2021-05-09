@@ -107,7 +107,7 @@ class NumberLink : public Node
     bool is360();
     // Funcao recursiva que tenta alcancar um caracter apartir de uma posicao.
     // IMPORTANTE: passar uma copia do estado, pois e alterado.
-    bool canConnect(char* stateCopy, int startPosition, char letter);    
+    bool canConnect(char* stateCopy, int startPosition, char letter, int& numOfHits);    
     // Verifica se e possivel conectar as restantes letras
     bool isDeadState();
     bool isOutOfBounds(int position);
@@ -134,8 +134,11 @@ public:
     int goBack(int position, int places, char* stateCpy);
     bool is360V2();
     // compara o valor heuristico
-    bool operator>(Node& node) override;
+   
     int getPriority();
     // compara o valor heuristico
     bool operator<(Node& node) override;
+    bool operator>(Node& node) override;
+    bool operator<=(Node& node) override;
+    bool operator>=(Node& node) override;
 };

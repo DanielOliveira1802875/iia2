@@ -83,5 +83,10 @@ public:
     // IMPORTANTE: Deve comparar o valor heuristico
     virtual bool operator<(Node& node) = 0;
 
+    virtual bool operator>=(Node& node) = 0;
+
+    // IMPORTANTE: Deve comparar o valor heuristico
+    virtual bool operator<=(Node& node) = 0;
+
 };
 

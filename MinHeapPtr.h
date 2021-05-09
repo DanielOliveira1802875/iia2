@@ -127,7 +127,7 @@ void MinHeapPtr<T>::bubbleDown(int index)
     const int leftChildIndex = indexOfLeftChild(index);
     const int rightChildIndex = indexOfRightChild(index);
     const int minChildIndex = minValueIndex(leftChildIndex, rightChildIndex);
-    const bool mustSwap = isValidIndex(minChildIndex) && *(array[index]) > *(array[minChildIndex]);
+    const bool mustSwap = isValidIndex(minChildIndex) && *(array[index]) >= *(array[minChildIndex]);
     if (mustSwap)
     {
         swap(index, minChildIndex);
@@ -142,7 +142,7 @@ void MinHeapPtr<T>::bubbleUp(int index)
     if (isEmpty() || !isValidIndex(index) || index == 0)
         return;
     int parentIndex = indexOfParent(index);
-    const bool mustSwap = isValidIndex(parentIndex) && *(array[index]) < *(array[parentIndex]);
+    const bool mustSwap = isValidIndex(parentIndex) && *(array[index]) <= *(array[parentIndex]);
     if (mustSwap)
     {
         swap(parentIndex, index);

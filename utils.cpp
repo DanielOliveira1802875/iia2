@@ -158,7 +158,7 @@ bool NumberLink::is360()
 
 // Funcao recursiva que tenta alcancar um caracter apartir de uma posicao.
 // IMPORTANTE: passar uma copia do estado, pois este e alterado.
-bool NumberLink::canConnect(char* stateCopy, int startPosition, char letter)
+bool NumberLink::canConnect(char* stateCopy, int startPosition, char letter, int& numOfHits)
 {
     stateCopy[startPosition] = '#';
     //std::cout << toString(stateCopy);
@@ -168,14 +168,33 @@ bool NumberLink::canConnect(char* stateCopy, int startPosition, char letter)
     const char* upChar = look(Direction::up, startPosition, stateCopy, upPos);
     const char* downChar = look(Direction::down, startPosition, stateCopy, downPos);
 
-    const bool letterFound = (*leftChar == letter) || (*rightChar == letter) ||
-        (*upChar == letter) || (*downChar == letter);
 
-    if (letterFound) return true;
-    if (*upChar == '.' && canConnect(stateCopy, upPos, letter)) return true;
-    if (*leftChar == '.' && canConnect(stateCopy, leftPos, letter)) return true;
-    if (*rightChar == '.' && canConnect(stateCopy, rightPos, letter)) return true;
-    if (*downChar == '.' && canConnect(stateCopy, downPos, letter)) return true;
+    if (*leftChar == letter)
+    {
+        numOfHits--;
+        stateCopy[leftPos] = '#';
+    }
+    if (*rightChar == letter)
+    {
+        numOfHits--;
+        stateCopy[rightPos] = '#';
+    }
+    if (*upChar == letter)
+    {
+        numOfHits--;
+        stateCopy[upPos] = '#';
+    }
+    if (*downChar == letter)
+    {
+        numOfHits--;
+        stateCopy[downPos] = '#';
+    }
+    if(numOfHits == 0)
+        return true;
+    if (*upChar == '.' && canConnect(stateCopy, upPos, letter, numOfHits)) return true;
+    if (*leftChar == '.' && canConnect(stateCopy, leftPos, letter, numOfHits)) return true;
+    if (*rightChar == '.' && canConnect(stateCopy, rightPos, letter, numOfHits)) return true;
+    if (*downChar == '.' && canConnect(stateCopy, downPos, letter, numOfHits)) return true;
 
     return false;
 }
@@ -192,11 +211,11 @@ bool NumberLink::isDeadState()
     {
         if (connected[i])
             continue;
-        for (int j = 0; j < numbers[i].numOcc && !isDead; ++j)
-        {
+
             memcpy(stateCpy, state, static_cast<size_t>(outOfBoundsPosition) + 2);
-            isDead = !canConnect(stateCpy, numbers[i].positions[j], numbers[i].upperLetter);
-        }
+            int numOfHits = numbers[i].numOcc - 1;
+            isDead = !canConnect(stateCpy, numbers[i].positions[0], numbers[i].upperLetter, numOfHits);
+        
     }
     //if (isDead)
         //std::cout << toString();
