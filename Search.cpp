@@ -41,7 +41,7 @@ void Search::startSearch()
     /*if (!aStar())
         printStats();*/
 
-    if (!aStar(Priority::heuristic))
+    if (!aStar(/*Priority::heuristic*/))
         printStats();
 
     // DFS

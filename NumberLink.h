@@ -1,14 +1,14 @@
 #pragma once
 #include "MinHeap.h"
 #include "Node.h"
-const int MAXOCC = 20;
+const int MAXOCC = 200;
 // Para manter uma lista com todas os numeros/letras e respetivas posicoes no estado (numbers[26])
 struct Letter
 {
     char upperLetter;
     char lowerLetter;
     int positions[MAXOCC];
-    int occurrences;
+    int numOcc;
     int manhattanDistance;
 };
 
@@ -68,7 +68,8 @@ class NumberLink : public Node
     int currentNumber;
     // Numero da ocurrentica do Numero/letra da atual procura
     int occurrenceIndex;
-    int currentConnectionCost;
+    int posSize;
+    int pos[MAXOCC];
     int islands[MAXOCC];
     // Posicao onde comecou caminho
     int pathRoot;
@@ -85,7 +86,6 @@ class NumberLink : public Node
     void setNextConnection();
     void loadInstace(int number);
     int netManDist(int* positions, int size, int* islands_);
-    Connection nextOccurance(int* positions, int size, int* islands_);
     // Altera a letra atual para outro caracter (evita que se conecte a ele proprio)
     void maskPathRoot();
     // Restaura a letra atual
