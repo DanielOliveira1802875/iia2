@@ -21,27 +21,28 @@ NumberLink::NumberLink()
     state = nullptr;
 }
 
-void NumberLink::maskPathRoot()
+template <class T>
+bool NumberLink::inArray(T* arr, int size, T value)
 {
-    if (state[pathRoot] == outOfBoundsChar)
-        return;
-    state[pathRoot] = maskChar;
-}
-
-void NumberLink::unmaskPathRoot()
-{
-    if (state[pathRoot] == outOfBoundsChar)
-        return;
-    state[pathRoot] = numbers[currentNumber].upperLetter;
+    for(int i = 0; i< size; ++i)    
+        if (arr[i] == value)
+            return true;    
+    return false;
 }
 
 void NumberLink::moveTo(int position)
 {
-    if (position < 0 || position >= outOfBoundsPosition || state[position] != '.')
+    if (isOutOfBounds(position))
         throw std::invalid_argument("NumberLink::moveTo() Posicao invalida!");
     pathHead = position;
-    state[position] = numbers[currentNumber].lowerLetter;
+    state[position] = newPathChar;
     setPosAround(pathHead, aroundPathHead);
+    if (inArray(pos, posSize, position))
+        return; 
+    pos[posSize] = position;
+    //islands[posSize] = islands[0];
+    posSize++;
+    
 }
 
 bool NumberLink::isConnected(int* pathAround)
@@ -118,7 +119,7 @@ Node* NumberLink::getClone()
     memcpy(newState->state, state, static_cast<size_t>(outOfBoundsPosition) + 2);
     memcpy(newState->aroundPathHead, aroundPathHead, sizeof(int) * 4);
     memcpy(newState->connected, connected, sizeof(bool) * totalNumbers);
-    memcpy(newState->islands, islands, sizeof(int) * MAXOCC);
+    //memcpy(newState->islands, islands, sizeof(int) * MAXOCC);
     memcpy(newState->pos, pos, sizeof(int) * MAXOCC);
     newState->posSize = posSize;
     newState->pathHead = pathHead;
@@ -126,21 +127,25 @@ Node* NumberLink::getClone()
     newState->currentNumber = currentNumber;
     newState->pathRoot = pathRoot;
 
-    newState->occurrenceIndex = occurrenceIndex;
     return static_cast<Node*>(newState);
 }
 
 void NumberLink::setNextConnection()
 {
-    if (netManDist(pos, posSize, islands) >= 1 && currentNumber >= 0)
+    // entuanto a distancia manhatan de todas as ocurrencias for maior que zero, ainda faltam conexoes
+    if (netManDist(pos, posSize) > 0 && currentNumber >= 0 || currentNumber >= totalNumbers)
         return;
-   
+
     if (currentNumber >= 0)
     {
         connected[currentNumber] = true;
-        for (int i = 0; i < outOfBoundsPosition; i++)
-            if (state[i] == '%')
-                state[i] = numbers[currentNumber].upperLetter;
+        for (int i = 0; i < posSize; i++)
+        {
+            if (i < numbers[currentNumber].numOcc)
+                state[pos[i]] = numbers[currentNumber].upperLetter;
+            else
+                state[pos[i]] = numbers[currentNumber].lowerLetter;
+        }
     }
     currentNumber++;
     for (; currentNumber < totalNumbers; currentNumber++)
@@ -148,12 +153,11 @@ void NumberLink::setNextConnection()
         if (!connected[currentNumber])
         {
             memcpy(pos, numbers[currentNumber].positions, MAXOCC);
-            for (int i = 0; i < MAXOCC; i++)
-                islands[i] = i;
-            occurrenceIndex = 0;
+            /*for (int i = 0; i < MAXOCC; i++)
+                islands[i] = i;*/
             posSize = numbers[currentNumber].numOcc;
-            pathRoot = pathHead = numbers[currentNumber].positions[occurrenceIndex];
-            maskPathRoot();
+            pathHead = numbers[currentNumber].positions[0];
+            state[pathHead] = newPathChar;
             setPosAround(pathHead, aroundPathHead);
             return;
         }
@@ -162,38 +166,44 @@ void NumberLink::setNextConnection()
     pathRoot = pathHead = outOfBoundsPosition;
 }
 
-
-int NumberLink::netManDist(int* positions, int size, int* islands_)
+// calcula a distancia entre todos as ocorrencias de um numero, e devolve a soma das menores
+// distancias manhattan de forma a que todas as ocorrencias esteja conexas.
+int NumberLink::netManDist(int* positions, int size)
 {
-    int* islandsCpy = new int[MAXOCC];
-    memcpy(islandsCpy, islands_, sizeof(int) * MAXOCC);
+    // adiciona a uma min heap todas as distancias entre todas as ocorrencias
     MinHeap<Connection> connections;
     int totalManhattanDistance = 0;
     for (int i = 0; i < size - 1; i++)
-    {
         for (int j = i + 1; j < size; j++)
-        {            
             connections.addValue(Connection(calcManhattanDistance(positions[i], positions[j]), i, j));
-        }
-    }
+
+    // cria uma "ilha" desconexa para cada ocurrencia, com um id diferente de todos os outros
+    int* islands = new int[MAXOCC];
+    for (int i = 0; i < MAXOCC; i++)
+        islands[i] = i;
+
+    // vai extraido da min heap as distancias menores até que todas as ocorrencias estejam conexas
+    // para o efeito, uso variavel ilhas, em que as ocurrencias conexas passam a ter o mesmo id de ilha.
+    // no final pode apenas existir uma ilha com o mesmo id.
     while (!connections.isEmpty())
     {
         const Connection conn = connections.removeMin();
-        if (islandsCpy[conn.element1] != islandsCpy[conn.element2])
-        {
-            const int mergedIsland = islandsCpy[conn.element2];
-            for (int i = 0; i < size; ++i)
-                if (islandsCpy[i] == mergedIsland)
-                    islandsCpy[i] = islandsCpy[conn.element1];
-            totalManhattanDistance += conn.distance;
-            const int island = islandsCpy[0];
-            int numOfIslands = 1;
-            for (int i = 1; i < size && numOfIslands == 1; ++i)
-                if (islandsCpy[i] != island)
-                    numOfIslands++;
-            if (numOfIslands == 1)
-                break;
-        }
+        if (islands[conn.element1] == islands[conn.element2])
+            continue; // estas ilhas ja se encontram conexas, pode avancar.
+        // nova conexao, todas as ilhas conexas passam a ter o mesmo id [ X-X-X + Y-Y ] -> [ X-X-X-X-X ]
+        const int mergedIsland = islands[conn.element2];
+        for (int i = 0; i < size; ++i)
+            if (islands[i] == mergedIsland)
+                islands[i] = islands[conn.element1];
+        totalManhattanDistance += conn.distance;
+        // verifica quantas ilhas existem no total, caso exista so uma, então a funcao deve terminar
+        const int island = islands[0];
+        int numOfIslands = 1;
+        for (int i = 1; i < size && numOfIslands == 1; ++i)
+            if (islands[i] != island)
+                numOfIslands++;
+        if (numOfIslands == 1)
+            break;
     }
     return totalManhattanDistance;
 }
@@ -201,7 +211,7 @@ int NumberLink::netManDist(int* positions, int size, int* islands_)
 NumberLink::NumberLink(int instance)
 {
     qntColumns = qntLines = outOfBoundsPosition = currentNumber = 0;
-    pathRoot = pathHead = numbersRemaining = occurrenceIndex = 0;
+    pathRoot = pathHead = numbersRemaining = 0;
     state = nullptr;
     loadInstace(instance);
 }
@@ -222,14 +232,8 @@ void NumberLink::resetState()
     // nao e necessario, uma vez que os estados sao estaticos
 }
 
-int NumberLink::calcCurrentNumberManhattanDistance(NumberLink* _state)
-{
-    int total = netManDist(_state->pos, _state->posSize, _state->islands);    
-    return total;
-}
-
 int NumberLink::calcManhattanDistance(int startPosition, int endPosition)
-{    
+{
     const int horizontalDistance = abs(startPosition % qntColumns - endPosition % qntColumns);
     const int verticalDistance = abs(startPosition / qntColumns - endPosition / qntColumns);
     // o objetivo é estar conexo com o destino e não coincidir com ele, dai o -1
@@ -248,83 +252,159 @@ int NumberLink::remainingManhattanDistances()
 void NumberLink::updateSuccessorStats(NumberLink* successor)
 {
     if (priority == Priority::cost) return;
-    int thisheu = calcCurrentNumberManhattanDistance(successor);
-    int restheu = remainingManhattanDistances();
+    //int thisheu = calcCurrentNumberManhattanDistance(successor);
+    const int thisheu = netManDist(successor->pos, successor->posSize);
+    const int restheu = remainingManhattanDistances();
     successor->heuristic = thisheu + restheu;
-    if(successor->heuristic <= 19)
-    {
-        std::cout << toString(successor->state) << std::endl;
-        std::cout << successor->heuristic << std::endl;
-    }
-
 }
 
 
 // Gera os sucessores
 void NumberLink::genSuccessors(DLList<Node*>& successors)
 {
+    //updateSuccessorStats(this);
     setNextConnection();
-    maskPathRoot();
-    int around[4];
-    setPosAround(pathHead, around);
+    //maskPathRoot();
+    /*int around[4];
+    setPosAround(pathHead, around);*/
     bool connection = false;
-    for (int j = 0; j < 4 && !connection; j++)
+    for (int j = 0; j < 4; j++)
     {
-        for(int i = 0; i< numbers[currentNumber].numOcc; i++)
+        //for(int i = 0; i< numbers[currentNumber].numOcc; i++)
         {
-            if(around[j] == pos[i] && around[j] != pathRoot)
+            if ( !isOutOfBounds(aroundPathHead[j]) && 
+                (state[aroundPathHead[j]] == numbers[currentNumber].lowerLetter ||
+                state[aroundPathHead[j]] == numbers[currentNumber].upperLetter))
             {
                 connection = true;
-                pathRoot = pathHead = around[j];
-                islands[i] = 0;
-                maskPathRoot();
+                //pathRoot = pathHead = around[j];
+                //state[around[j]] = newPathChar;
+                moveTo(aroundPathHead[j]);
             }
         }
     }
     if (!connection)
         for (int i = 0; i < 4; i++)
         {
-            if (state[around[i]] != '.')
+            if (state[aroundPathHead[i]] != '.')
                 continue;
-            NumberLink* successor = (NumberLink*)getClone();            
-            successor->moveTo(around[i]);
-            successor->pos[posSize] = around[i];
-            successor->islands[posSize] = islands[occurrenceIndex];
-            successor->posSize++;
-            if (/*successor->isSelfConnectingPath() ||*/  successor->isDeadState() /*|| successor->is360V2()*/)
-                delete successor;
-            else
+            NumberLink* successor = (NumberLink*)getClone();
+            successor->moveTo(aroundPathHead[i]);
+            //successor->state[successor->pathHead] = newPathChar;
+            //successor->pos[successor->posSize] = aroundPathHead[i];
+            //successor->islands[successor->posSize] = islands[successor->occurrenceIndex];
+            //successor->posSize++;           
+
+            ///////////////////////
+
+            //char* stateCpy = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
+            //DLList<int> essential;
+            //for (int k = 0; k < outOfBoundsPosition; k++)
+            //{
+            //    int numHits = 1;
+            //    if (successor->state[k] != '.')
+            //        continue;
+            //    memcpy(stateCpy, successor->state, static_cast<size_t>(outOfBoundsPosition) + 2);
+            //    stateCpy[k] = '|';               
+            //    numHits = 1;
+            //    if (!canConnectV2(stateCpy, successor->pathHead, numbers[currentNumber].upperLetter))
+            //    {
+            //        essential.addToHead(k);
+            //    }
+            //}
+            //while (!essential.isEmpty())
+            //{
+            //    int ess = essential.deleteFromHead();
+            //    successor->pos[successor->posSize] = ess;
+            //    successor->islands[successor->posSize] = islands[occurrenceIndex];
+            //    successor->posSize++;
+            //    successor->state[ess] = numbers[currentNumber].upperLetter;
+            //    successor->cost++;
+            //    //std::cout << successor->toString();
+
+            //}
+
+            ///////////////////////
+
+            if (successor->isSelfConnectingPath() || successor->isDeadState() || successor->is360())
             {
-                updateSuccessorStats(successor);
-                successors.addToTail((Node*)successor);
+                //std::cout << successor->toString();
+                delete successor;
+                continue;
             }
+            
+            
+            updateSuccessorStats(successor);
+            successors.addToTail((Node*)successor);
+            
         }
     else
+    {
+        for (int i = 0; i < posSize; i++)
+        {
+            if (state[pos[i]] == newPathChar)
+                state[pos[i]] = oldPathChar;
+        }
+        //std::cout << toString();
         for (int j = 0; j < posSize; j++)
         {
-            if(islands[0] != islands[j])
+            if (state[pos[j]] != oldPathChar)
                 continue;
-            setPosAround(pos[j], around);
+
+            setPosAround(pos[j], aroundPathHead);
             for (int i = 0; i < 4; i++)
             {
-                if (state[around[i]] != '.')
+                if (state[aroundPathHead[i]] != '.')
                     continue;
                 NumberLink* successor = (NumberLink*)getClone();
-                
-                successor->moveTo(around[i]);
-                successor->pos[posSize] = around[i];
-                successor->islands[posSize] = islands[j];
-                successor->posSize++;
+                successor->moveTo(aroundPathHead[i]);
+                /*successor->state[successor->pathHead] = newPathChar;
+                successor->pos[successor->posSize] = aroundPathHead[i];
+                successor->islands[successor->posSize] = islands[j];
+                successor->posSize++;*/
 
-                if (/*successor->isSelfConnectingPath() ||*/ successor->isDeadState() /*|| successor->is360V2()*/)
+                ////////////////////////////
+                //char* stateCpy = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
+                //DLList<int> essential;
+                //for (int k = 0; k < outOfBoundsPosition; k++)
+                //{
+                //    if (successor->state[k] != '.')
+                //        continue;
+                //    memcpy(stateCpy, successor->state, static_cast<size_t>(outOfBoundsPosition) + 2);
+                //    stateCpy[k] = '|';
+                //    int numHits = 1;
+
+                //    if (!canConnect(stateCpy, successor->pathHead, numbers[currentNumber].upperLetter, numHits))
+                //    {
+                //        essential.addToHead(k);
+                //    }
+                //}
+                //while (!essential.isEmpty())
+                //{
+                //    int ess = essential.deleteFromHead();
+                //    successor->pos[successor->posSize] = ess;
+                //    successor->islands[successor->posSize] = islands[occurrenceIndex];
+                //    successor->posSize++;
+                //    successor->state[ess] = numbers[currentNumber].lowerLetter;
+                //    //std::cout << successor->toString();
+                //    //std::cout << successor->toString();
+                //}
+                /// /////////////////
+
+                if (successor->isSelfConnectingPath() || successor->isDeadState() /*|| successor->is360V2()*/)
+                {
+                    //std::cout << successor->toString();
                     delete successor;
+                }
                 else
                 {
+                    //std::cout << successor->toString();
                     updateSuccessorStats(successor);
                     successors.addToTail((Node*)successor);
                 }
             }
         }
+    }
 }
 
 
@@ -380,13 +460,15 @@ void NumberLink::loadInstace(int number)
     const char inst2[] = "A.B...B.A";
     const char inst3[] = "C........C.........BB.........A........A";
     const char inst4[] = "B.A.C.CD.........C....B.CD.D..B........A";
-    const char inst5[] = "............A....B....B.CD.A..C........D";
-    const char inst6[] = "D........C..A....B....B....A..C........D";
-    const char inst7[] = "C..............D.BA............DA........E...B..E.......C...";
-    const char inst8[] = "D.............D..C.....A...........B...............C.....A..............AB...B.......C......D.......";
-    const char inst9[] = "........A.............A...................................A.A.................................A.....";
-    //const char inst9[] = ".A......A.....A.......A.....A......A......A..............A.A.............A...................A.....";
-    const char inst10[] = "...........BABABABA............ABABABAB......................BABABABA............ABABABAB...........";
+    const char inst5[] = "..........A.B.A.B...........B.A.B.A..........";
+    const char inst6[] = ".A.A....AB.B.B..........................A.A.A.....B.B.B.....";
+    const char inst7[] = "A........GB..A.H...H...B.G.......C.F.......D.E.......................ECD.......F";
+    const char inst8[] =
+        "D.............D..C.....A...........B...............C.....A..............AB...B.......C......D.......";
+    const char inst9[] =
+        "........A.............A...................................A.A.................................A.....";
+    const char inst10[] =
+        "...........BABABABA............ABABABAB......................BABABABA............ABABABAB...........";
     const char inst11[] =
         "..........A..BA.HI..........I....G..F.E...F..H..JCBE........C.....G.J.D..................D..........";
     const char inst12[] =
@@ -422,21 +504,21 @@ void NumberLink::loadInstace(int number)
         memcpy(state, inst4, static_cast<size_t>(outOfBoundsPosition));
         break;
     case 5:
-        qntLines = 4;
-        qntColumns = 10;
+        qntLines = 5;
+        qntColumns = 9;
         outOfBoundsPosition = qntColumns * qntLines;
         this->state = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
         memcpy(state, inst5, static_cast<size_t>(outOfBoundsPosition));
         break;
     case 6:
-        qntLines = 4;
+        qntLines = 6;
         qntColumns = 10;
         outOfBoundsPosition = qntColumns * qntLines;
         this->state = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
         memcpy(state, inst6, static_cast<size_t>(outOfBoundsPosition));
         break;
     case 7:
-        qntLines = 6;
+        qntLines = 8;
         qntColumns = 10;
         outOfBoundsPosition = qntColumns * qntLines;
         this->state = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
@@ -484,7 +566,6 @@ void NumberLink::loadInstace(int number)
     state[outOfBoundsPosition] = outOfBoundsChar;
     numbersRemaining = 0;
     currentNumber = 0;
-    occurrenceIndex = 0;
     pathRoot = outOfBoundsPosition;
     pathHead = outOfBoundsPosition;
     for (short i = 0; i < 26; ++i)
@@ -514,7 +595,7 @@ void NumberLink::loadInstace(int number)
             int islands[MAXOCC];
             for (int i = 0; i < MAXOCC; ++i)
                 islands[i] = i;
-            numbers[i].manhattanDistance += netManDist(numbers[i].positions, numbers[i].numOcc, islands);
+            numbers[i].manhattanDistance += netManDist(numbers[i].positions, numbers[i].numOcc);
         }
     }
     currentNumber = -1;

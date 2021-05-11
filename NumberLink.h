@@ -54,7 +54,8 @@ class NumberLink : public Node
     static int outOfBoundsPosition;
     static const int totalNumbers = 26;
     static const char outOfBoundsChar = '?';
-    static const char maskChar = '%';
+    static const char newPathChar = '@';
+    static const char oldPathChar = '%';    
     static const int A = 65;
     static const int a = 97;
     // Mantem a lista de numeros/letras e a respetiva posicao no estado
@@ -67,10 +68,10 @@ class NumberLink : public Node
     // Numero/letra da atual procura
     int currentNumber;
     // Numero da ocurrentica do Numero/letra da atual procura
-    int occurrenceIndex;
+    //int occurrenceIndex;
     int posSize;
     int pos[MAXOCC];
-    int islands[MAXOCC];
+    //int islands[MAXOCC];
     // Posicao onde comecou caminho
     int pathRoot;
     // Posicao atual do caminho
@@ -82,14 +83,16 @@ class NumberLink : public Node
 
 
     NumberLink();
+    template <class T>
+    static bool inArray(T* arr, int size, T value);
     // Prepara o estado para a ligacao do proximo numero/letra
     void setNextConnection();
     void loadInstace(int number);
-    int netManDist(int* positions, int size, int* islands_);
+    int netManDist(int* positions, int size);
     // Altera a letra atual para outro caracter (evita que se conecte a ele proprio)
-    void maskPathRoot();
+
     // Restaura a letra atual
-    void unmaskPathRoot();
+
     // Altera pathHead para a proxima posicao
     void moveTo(int position);
     // Verifica se o numero/letra atual esta conectado
@@ -107,7 +110,7 @@ class NumberLink : public Node
     bool is360();
     // Funcao recursiva que tenta alcancar um caracter apartir de uma posicao.
     // IMPORTANTE: passar uma copia do estado, pois e alterado.
-    bool canConnect(char* stateCopy, int startPosition, char letter, int& numOfHits);    
+    bool canConnect(char* stateCopy, int startPosition, char letter, int& numOfHits);
     // Verifica se e possivel conectar as restantes letras
     bool isDeadState();
     bool isOutOfBounds(int position);
@@ -125,7 +128,6 @@ public:
     bool isSolution() override;
     // Neste caso, nada faz, pois sao instancias fixas
     void resetState() override;
-    int calcCurrentNumberManhattanDistance(NumberLink* _state);
     int calcManhattanDistance(int startPosition, int endPosition);
     int remainingManhattanDistances();
     void updateSuccessorStats(NumberLink* successor);

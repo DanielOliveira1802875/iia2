@@ -193,6 +193,7 @@ bool Search::bFS()
 bool Search::aStar(Priority priority)
 {
     Node* rootCopy = root->getClone();
+    rootCopy->cost = 0;
     Node::priority = priority;
     minOpen.addValue(rootCopy);
     if (withDuplicates && useHashTable)
@@ -200,7 +201,7 @@ bool Search::aStar(Priority priority)
     while (!minOpen.isEmpty())
     {
         Node* currentNode = minOpen.removeMin();
-        std::cout << currentNode->toString();
+        //std::cout << currentNode->toString();
         if (currentNode->isSolution())
         {
             printStats(currentNode);

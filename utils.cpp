@@ -13,13 +13,13 @@ std::string NumberLink::toString()
         }
         returnValue += '\n';
     }
-   // maskPathRoot();
+    // maskPathRoot();
     return returnValue;
 }
 
 std::string NumberLink::toString(char* state_)
 {
-   // unmaskPathRoot();
+    // unmaskPathRoot();
     std::string returnValue = "\n";
     for (int i = 0; i < qntLines; i++)
     {
@@ -43,13 +43,13 @@ int NumberLink::goBack(int position, int places, char* stateCpy)
     {
         stateCpy[position] = '#';
         //std::cout << toString(stateCpy);
-        if (*look(Direction::left, position, stateCpy, leftPos) == state[pathHead])
+        if (*look(Direction::left, position, stateCpy, leftPos) == '@')
             position = leftPos;
-        else if (*look(Direction::right, position, stateCpy, rightPos) == state[pathHead])
+        else if (*look(Direction::right, position, stateCpy, rightPos) == '@')
             position = rightPos;
-        else if (*look(Direction::up, position, stateCpy, upPos) == state[pathHead])
+        else if (*look(Direction::up, position, stateCpy, upPos) == '@')
             position = upPos;
-        else if (*look(Direction::down, position, stateCpy, downPos) == state[pathHead])
+        else if (*look(Direction::down, position, stateCpy, downPos) == '@')
             position = downPos;
         else return outOfBoundsPosition;
     }
@@ -61,16 +61,33 @@ bool NumberLink::is360V2()
 {
     char* stateCpy = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
     memcpy(stateCpy, state, static_cast<size_t>(outOfBoundsPosition) + 2);
-    stateCpy[pathRoot] = state[pathHead];
+    //stateCpy[pathRoot] = state[pathHead];
     const int back4Pos = goBack(pathHead, 4, stateCpy);
-
-    if (!isOutOfBounds(back4Pos) && calcManhattanDistance(pathHead, back4Pos) == 1 && state[(pathHead + back4Pos) / 2]
-        == '.')
+    //std::cout << toString(state);
+    if (!isOutOfBounds(back4Pos) && calcManhattanDistance(pathHead, back4Pos) == 1)
     {
-        //std::cout << toString(stateCpy);
-        delete[] stateCpy;
-        return true;
+        const int minPos = pathHead < back4Pos ? pathHead : back4Pos;
+        const int maxPos = minPos == pathHead ? back4Pos : pathHead;
+        if (pathHead / qntColumns == back4Pos / qntColumns)
+        {   // Mesma linha, verifica se os espaços entre a curva estao vazios.
+            if (stateCpy[minPos + 1] == '.' && minPos + 2 == maxPos)
+            {
+                //std::cout << toString(stateCpy);
+                delete[] stateCpy;
+                return true;
+            }
+        }
+        else
+        {   // mesma coluna, verifica se os espaços entre a curva estao vazios.
+            if (stateCpy[minPos + qntColumns] == '.' && minPos + qntColumns * 2 == maxPos)
+            {
+                //std::cout << toString(stateCpy);
+                delete[] stateCpy;
+                return true;
+            }
+        }
     }
+
     const int back5Pos = goBack(back4Pos, 1, stateCpy);
     if (!isOutOfBounds(back5Pos) && calcManhattanDistance(pathHead, back5Pos) == 2)
     {
@@ -104,21 +121,17 @@ bool NumberLink::is360V2()
 // Verifica se o caminho esta em contacto com ele proprio
 bool NumberLink::isSelfConnectingPath()
 {
-    const char pathLetter = numbers[currentNumber].lowerLetter;
-    state[pathRoot] = pathLetter;
     int count = 0;
+    //std::cout << toString();
     for (int i = 0; i < 4; ++i)
-        if (state[aroundPathHead[i]] == pathLetter)
+        if (state[aroundPathHead[i]] == newPathChar)
             count++;
-    maskPathRoot();
     return count > 1;
 }
 
 // Verifica se o caminho faz curva de 360, com 1 espaco de intervalo (tipo U)
 bool NumberLink::is360()
 {
-    const char pathLetter = numbers[currentNumber].lowerLetter;
-    state[pathRoot] = pathLetter;
     bool flag = false;
     for (int i = 0; i < 4 && !flag; i++)
     {
@@ -127,31 +140,31 @@ bool NumberLink::is360()
         int nextPosition;
         int discard;
         // verifica verticalmente
-        if (*look(Direction::left, aroundPathHead[i], state, discard) == pathLetter &&
-            *look(Direction::right, aroundPathHead[i], state, discard) == pathLetter)
+        if (*look(Direction::left, aroundPathHead[i], state, discard) == newPathChar &&
+            *look(Direction::right, aroundPathHead[i], state, discard) == newPathChar)
         {
-            if ((*look(Direction::down, aroundPathHead[i], state, nextPosition) == pathLetter &&
-                *look(Direction::left, nextPosition, state, discard) == pathLetter &&
-                *look(Direction::right, nextPosition, state, discard) == pathLetter) ||
-                (*look(Direction::up, aroundPathHead[i], state, nextPosition) == pathLetter &&
-                    *look(Direction::left, nextPosition, state, discard) == pathLetter &&
-                    *look(Direction::right, nextPosition, state, discard) == pathLetter))
+            if ((*look(Direction::down, aroundPathHead[i], state, nextPosition) == newPathChar &&
+                 *look(Direction::left, nextPosition, state, discard) == newPathChar &&
+                 *look(Direction::right, nextPosition, state, discard) == newPathChar) ||
+                (*look(Direction::up, aroundPathHead[i], state, nextPosition) == newPathChar &&
+                 *look(Direction::left, nextPosition, state, discard) == newPathChar &&
+                 *look(Direction::right, nextPosition, state, discard) == newPathChar))
                 flag = true;
         }
             // verifica horizontalmente
-        else if (*look(Direction::up, aroundPathHead[i], state, discard) == pathLetter &&
-            *look(Direction::down, aroundPathHead[i], state, discard) == pathLetter)
+        else if (*look(Direction::up, aroundPathHead[i], state, discard) == newPathChar &&
+                 *look(Direction::down, aroundPathHead[i], state, discard) == newPathChar)
         {
-            if ((*look(Direction::left, aroundPathHead[i], state, nextPosition) == pathLetter &&
-                *look(Direction::up, nextPosition, state, discard) == pathLetter &&
-                *look(Direction::down, nextPosition, state, discard) == pathLetter) ||
-                (*look(Direction::right, aroundPathHead[i], state, nextPosition) == pathLetter &&
-                    *look(Direction::up, nextPosition, state, discard) == pathLetter &&
-                    *look(Direction::down, nextPosition, state, discard) == pathLetter))
+            if ((*look(Direction::left, aroundPathHead[i], state, nextPosition) == newPathChar &&
+                 *look(Direction::up, nextPosition, state, discard) == newPathChar &&
+                 *look(Direction::down, nextPosition, state, discard) == newPathChar) ||
+                (*look(Direction::right, aroundPathHead[i], state, nextPosition) == newPathChar &&
+                 *look(Direction::up, nextPosition, state, discard) == newPathChar &&
+                 *look(Direction::down, nextPosition, state, discard) == newPathChar))
                 flag = true;
         }
     }
-    maskPathRoot();
+
     return flag;
 }
 
@@ -160,6 +173,8 @@ bool NumberLink::is360()
 // IMPORTANTE: passar uma copia do estado, pois este e alterado.
 bool NumberLink::canConnect(char* stateCopy, int startPosition, char letter, int& numOfHits)
 {
+    if (numOfHits == 0)
+        return true;
     stateCopy[startPosition] = '#';
     //std::cout << toString(stateCopy);
     int upPos, downPos, leftPos, rightPos;
@@ -169,28 +184,26 @@ bool NumberLink::canConnect(char* stateCopy, int startPosition, char letter, int
     const char* downChar = look(Direction::down, startPosition, stateCopy, downPos);
 
 
-    if (*leftChar == letter)
+    if (toupper(*leftChar) == letter)
     {
         numOfHits--;
-        stateCopy[leftPos] = '#';
+        if (canConnect(stateCopy, leftPos, letter, numOfHits)) return true;
     }
-    if (*rightChar == letter)
+    if (toupper(*rightChar) == letter)
     {
         numOfHits--;
-        stateCopy[rightPos] = '#';
+        if (canConnect(stateCopy, rightPos, letter, numOfHits)) return true;
     }
-    if (*upChar == letter)
+    if (toupper(*upChar) == letter)
     {
         numOfHits--;
-        stateCopy[upPos] = '#';
+        if (canConnect(stateCopy, upPos, letter, numOfHits)) return true;
     }
-    if (*downChar == letter)
+    if (toupper(*downChar) == letter)
     {
         numOfHits--;
-        stateCopy[downPos] = '#';
+        if (canConnect(stateCopy, downPos, letter, numOfHits)) return true;
     }
-    if(numOfHits == 0)
-        return true;
     if (*upChar == '.' && canConnect(stateCopy, upPos, letter, numOfHits)) return true;
     if (*leftChar == '.' && canConnect(stateCopy, leftPos, letter, numOfHits)) return true;
     if (*rightChar == '.' && canConnect(stateCopy, rightPos, letter, numOfHits)) return true;
@@ -198,6 +211,7 @@ bool NumberLink::canConnect(char* stateCopy, int startPosition, char letter, int
 
     return false;
 }
+
 
 // Verifica se e possivel conectar as restantes letras
 bool NumberLink::isDeadState()
@@ -212,13 +226,12 @@ bool NumberLink::isDeadState()
         if (connected[i])
             continue;
 
-            memcpy(stateCpy, state, static_cast<size_t>(outOfBoundsPosition) + 2);
-            int numOfHits = numbers[i].numOcc - 1;
-            isDead = !canConnect(stateCpy, numbers[i].positions[0], numbers[i].upperLetter, numOfHits);
-        
+        memcpy(stateCpy, state, static_cast<size_t>(outOfBoundsPosition) + 2);
+        int numOfHits = numbers[i].numOcc - 1;
+        isDead = !canConnect(stateCpy, numbers[i].positions[0], numbers[i].upperLetter, numOfHits);
     }
     //if (isDead)
-        //std::cout << toString();
+    //std::cout << toString();
     delete[] stateCpy;
 
     return isDead;
