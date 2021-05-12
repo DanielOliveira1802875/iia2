@@ -201,7 +201,7 @@ bool Search::aStar(Priority priority)
     while (!minOpen.isEmpty())
     {
         Node* currentNode = minOpen.removeMin();
-        //std::cout << currentNode->toString();
+        std::cout << currentNode->toString();
         if (currentNode->isSolution())
         {
             printStats(currentNode);

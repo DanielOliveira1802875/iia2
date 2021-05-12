@@ -131,10 +131,10 @@ public:
     int calcManhattanDistance(int startPosition, int endPosition);
     int remainingManhattanDistances();
     void updateSuccessorStats(NumberLink* successor);
+    bool isConnected();
     // Gera e devolve uma lista de estados sucessores
     void genSuccessors(DLList<Node*>& successors) override;
-    int goBack(int position, int places, char* stateCpy);
-    bool is360V2();
+
     // compara o valor heuristico
    
     int getPriority();
