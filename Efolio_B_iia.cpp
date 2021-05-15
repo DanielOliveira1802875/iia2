@@ -4,27 +4,44 @@
 
 int main()
 {
-    //     INSTANCIA EXEMPLO
-    /*char state[] = "...D....C..BE....CA.....E............A....B...D..";
-    NumberLink* netManDist = new NumberLink(state, 7, 7);*/
 
-    NumberLink* state = new NumberLink(9);
-    Search search(state);
-    delete state;
-
-    /*for(int i = 1; i < 11; i++)
-    {
+    for (int i = 1; i < 11; i++)
+    {   // Best first search
+        std::cout << "################################\n";
+        std::cout << "INSTANCIA " << i << std::endl;
+        std::cout << "Algoritmo Best First Search\n";
+        std::cout << "Sem limite\n";
+        std::cout << "Todas as otimizacoes\n";
         NumberLink* state = new NumberLink(i);
         Search search(state);
+        search.bestFS();
         delete state;
-    }  */  
-
-    /*std::cout << "\n#############################\n        INSTANCIA 12\n#############################";
-    char inst13[] = "..@......@......@..A.....@......@......@..@.....@......@....@....@.@....@.....@...@......@....@.........@.@....@..@.@..@..@.........@.......@......@.@....@..@.....@.@..@...@......@.@..@..@..@.@..@.......@....@.....@...@...@...@....@....@.......@....@....@...@...@....@....@....@...@....@....@....@...@....@....@....@......@....@....@....@...@....@....@....@...@.......@....@....@.A.@....@....@....@..";
-    NumberLink* state13 = new NumberLink(inst13, 20, 20, Priority::heuristic);
-    Search search13(state13);
-    delete state13;*/
-    
+    }
+    for(int i = 1; i < 11; i++)
+    {   // A* sem Limite
+        std::cout << "################################\n";
+        std::cout << "INSTANCIA " << i  <<std::endl;
+        std::cout << "Algoritmo A*\n";
+        std::cout << "Sem limite\n";
+        std::cout << "Todas as otimizacoes\n";
+        NumberLink* state = new NumberLink(i);
+        Search search(state);
+        search.aStar();
+        delete state;
+    }
+    for (int i = 1; i < 11; i++)
+    {   // A* Limitado (300)
+        std::cout << "################################\n";
+        std::cout << "INSTANCIA " << i << std::endl;
+        std::cout << "Algoritmo A*\n";
+        std::cout << "Limitado a 300 estados\n";
+        std::cout << "Todas as otimizacoes\n";        
+        NumberLink* state = new NumberLink(i);
+        Search search(state);
+        search.aStar(300);
+        delete state;
+    }
+    std::cout << "################################\n";
     return 0;
 }
 

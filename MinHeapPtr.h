@@ -19,7 +19,9 @@ class MinHeapPtr
     void bubbleUp(int index);
     bool isValidIndex(int index);
     bool isPointer;
+    int maxSize; // Por defeito é -1 (Sem limite)
 public:
+    void setMaxSize(int max_size) { maxSize = max_size; }
     void addValue(T value);
     T removeMin();
     T peekMin();
@@ -27,6 +29,7 @@ public:
     MinHeapPtr();
     void clear();
     ~MinHeapPtr();
+
 };
 
 template <class T>
@@ -36,7 +39,7 @@ void MinHeapPtr<T>::increaseSizeOfArray()
     T* newArray = new T[capacity];
     memcpy(newArray, array, size * sizeof(T));
     delete array;
-    array = newArray;
+    array = newArray;    
 }
 
 template <class T>
@@ -66,6 +69,8 @@ void MinHeapPtr<T>::addValue(T value)
     array[size] = value;
     ++size;
     bubbleUp(size -1);
+    if(maxSize >= 0 && size > maxSize)   
+        delete array[--size];
 }
 
 template <class T>
@@ -157,6 +162,7 @@ MinHeapPtr<T>::MinHeapPtr()
     capacity = 10;
     size = 0;
     array = new T[10];
+    maxSize = -1;
 }
 
 template <class T>

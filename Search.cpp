@@ -5,14 +5,11 @@ Search::Search(Node* root)
 {
     this->root = root;
     resetSearch();
-    startSearch();
-}
-
-void Search::setRootNode(Node* root)
-{
-    this->root = root;
-    resetSearch();
-    startSearch();
+    //startSearch();
+    limit = -1;
+    reconstructPath = false;
+    withDuplicates = false;
+    useHashTable = false;
 }
 
 
@@ -28,33 +25,8 @@ void Search::resetSearch()
 
 Search::~Search()
 {
-}
-
-void Search::startSearch()
-{
-    limit = -1;
-    reconstructPath = false;
-    withDuplicates = false;
-    useHashTable = false;
-
-
-    /*if (!aStar())
-        printStats();*/
-
-    if (!aStar(/*Priority::heuristic*/))
-        printStats();
-
-    // DFS
-     /*if (!dFS())
-        printStats();*/
-
-    //BFS
-    /*if (!bFS())
-        printStats();*/
-
 
 }
-
 
 // Atualiza o atributo pai e custo total de cada sucessor
 void Search::updateNodeStats(DLList<Node*>& successors, Node* parent)
@@ -190,22 +162,24 @@ bool Search::bFS()
     return false;
 }
 
-bool Search::aStar(Priority priority)
+bool Search::aStar(int maxOpen, Priority priority)
 {
+    minOpen.setMaxSize(maxOpen);
     Node* rootCopy = root->getClone();
     rootCopy->cost = 0;
     Node::priority = priority;
     minOpen.addValue(rootCopy);
     if (withDuplicates && useHashTable)
         initializeKnownStates(rootCopy);
-    while (!minOpen.isEmpty())
+    while (!minOpen.isEmpty() && totExpansions < 10000)
     {
         Node* currentNode = minOpen.removeMin();
-        std::cout << currentNode->toString();
+        //std::cout << currentNode->toString();
         if (currentNode->isSolution())
         {
             printStats(currentNode);
             clearLists();
+            delete currentNode;
             return true;
         }
         ++totExpansions;
@@ -226,7 +200,13 @@ bool Search::aStar(Priority priority)
             delete currentNode;
     }
     clearLists();
+    printStats();
     return false;
+}
+
+bool Search::bestFS()
+{
+   return aStar(-1,Priority::heuristic);
 }
 
 void Search::removeDuplicates(DLList<Node*>& successors)
@@ -284,6 +264,7 @@ void Search::clearLists()
     while (!closed.isEmpty())
         delete closed.deleteFromHead();
     minOpen.clear();
+    minOpen.setMaxSize(-1);
 
     if (knownStates != nullptr)
     {   // NOTA: Porque passei nullptr no valor do no. Caso contrario, era necessário desalocar a memoria (aqui OU em open e close).

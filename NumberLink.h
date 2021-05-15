@@ -1,6 +1,8 @@
 #pragma once
 #include "MinHeap.h"
 #include "Node.h"
+
+// Numero maximo de ocurrencias de um numero e pontos das respetivas conexoes
 const int MAXOCC = 200;
 // Para manter uma lista com todas os numeros/letras e respetivas posicoes no estado (numbers[26])
 struct Letter
@@ -9,7 +11,7 @@ struct Letter
     char lowerLetter;
     int positions[MAXOCC];
     int numOcc;
-    int manhattanDistance;
+    int numHeuristic;
 };
 
 struct Connection
@@ -58,8 +60,9 @@ class NumberLink : public Node
     static const char oldPathChar = '%';    
     static const int A = 65;
     static const int a = 97;
-    // Mantem a lista de numeros/letras e a respetiva posicao no estado
-    static Letter numbers[26];
+    // Mantem a lista de numeros/letras, com as respetivas ocorrencias e
+    // a melhor distanica  manhattan entre as ocorrencias.
+    static Letter numbers[totalNumbers];
 
     // Estado atual
     char* state;
@@ -71,33 +74,28 @@ class NumberLink : public Node
     //int occurrenceIndex;
     int posSize;
     int pos[MAXOCC];
-    //int islands[MAXOCC];
-    // Posicao onde comecou caminho
-    int pathRoot;
+
     // Posicao atual do caminho
     int pathHead;
     // Mantem as posicoes em redor de pathHead (cima, esquerda, direita, baixo)
     int aroundPathHead[4];
     // Guarda o numero de numeros/letras que falta conectar (atual nao incluida)
-    int numbersRemaining;
-
 
     NumberLink();
+    void loadInstace(int number);
     template <class T>
     static bool inArray(T* arr, int size, T value);
     // Prepara o estado para a ligacao do proximo numero/letra
     void setNextConnection();
-    void loadInstace(int number);
-    int netManDist(int* positions, int size);
+    
+    int HeuristicFunc(int* positions, int size);
     // Altera a letra atual para outro caracter (evita que se conecte a ele proprio)
 
     // Restaura a letra atual
 
     // Altera pathHead para a proxima posicao
     void moveTo(int position);
-    // Verifica se o numero/letra atual esta conectado
-    bool isConnected(int* pathAround);
-    bool isLastConnected(int* pathAround);
+
     // Devolve um apontador para o caracter correspondente a posicao (cima, esquerda, direita, baixo)
     // Para que is360() e canConnect() tambem possam usar esta funcao, e necessario passar um estado e uma posicao inicial.
     // Coloca a posicao final em endPosition
@@ -114,9 +112,10 @@ class NumberLink : public Node
     // Verifica se e possivel conectar as restantes letras
     bool isDeadState();
     bool isOutOfBounds(int position);
-public:
+public:    
     // Devolve um clone deste estado
     Node* getClone() override;
+    void unmaskAll();
     NumberLink(int instance);
     ~NumberLink() override;
     // Devolve uma representação visual deste estado.
@@ -129,14 +128,13 @@ public:
     // Neste caso, nada faz, pois sao instancias fixas
     void resetState() override;
     int calcManhattanDistance(int startPosition, int endPosition);
-    int remainingManhattanDistances();
+    int remainingHeuristics();
     void updateSuccessorStats(NumberLink* successor);
     bool isConnected();
     // Gera e devolve uma lista de estados sucessores
     void genSuccessors(DLList<Node*>& successors) override;
 
-    // compara o valor heuristico
-   
+    // compara o valor heuristico   
     int getPriority();
     // compara o valor heuristico
     bool operator<(Node& node) override;

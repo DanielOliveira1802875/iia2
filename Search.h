@@ -28,9 +28,7 @@ class Search
 public:   
     Search(Node* root);
     ~Search();
-    void resetSearch();
-    void setRootNode(Node* root);
-    void startSearch();    
+    void resetSearch(); 
     // Atualiza o atributo pai e custo total de cada sucessor
     void updateNodeStats(DLList<Node*>& successors, Node* parent);
     void printPath(Node* currentNode);
@@ -39,7 +37,8 @@ public:
 
     bool dFS();
     bool bFS();
-    bool aStar(Priority priority = Priority::costPlusHeuristic);
+    bool aStar(int maxOpen = -1, Priority priority = Priority::costPlusHeuristic);
+    bool bestFS();
 
     void removeDuplicates(DLList<Node*>& successors);
 

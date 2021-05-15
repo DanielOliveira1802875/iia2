@@ -2,7 +2,6 @@
 
 std::string NumberLink::toString()
 {
-    //unmaskPathRoot();
     std::string returnValue = "\n";
     for (int i = 0; i < qntLines; i++)
     {
@@ -13,13 +12,11 @@ std::string NumberLink::toString()
         }
         returnValue += '\n';
     }
-    // maskPathRoot();
     return returnValue;
 }
 
 std::string NumberLink::toString(char* state_)
 {
-    // unmaskPathRoot();
     std::string returnValue = "\n";
     for (int i = 0; i < qntLines; i++)
     {
@@ -30,18 +27,15 @@ std::string NumberLink::toString(char* state_)
         }
         returnValue += '\n';
     }
-    //maskPathRoot();
     return returnValue;
 }
-
 
 // Verifica se o caminho esta em contacto com ele proprio
 bool NumberLink::isSelfConnectingPath()
 {
     int count = 0;
-    //std::cout << toString();
     for (int i = 0; i < 4; ++i)
-        if (state[aroundPathHead[i]] == newPathChar)
+        if (state[aroundPathHead[i]] == newPathChar || state[aroundPathHead[i]] == oldPathChar)
             count++;
     return count > 1;
 }
@@ -68,7 +62,7 @@ bool NumberLink::is360()
                  *look(Direction::right, nextPosition, state, discard) == newPathChar))
                 flag = true;
         }
-            // verifica horizontalmente
+        // verifica horizontalmente
         else if (*look(Direction::up, aroundPathHead[i], state, discard) == newPathChar &&
                  *look(Direction::down, aroundPathHead[i], state, discard) == newPathChar)
         {
@@ -81,12 +75,11 @@ bool NumberLink::is360()
                 flag = true;
         }
     }
-
     return flag;
 }
 
 
-// Funcao recursiva que tenta alcancar um caracter apartir de uma posicao.
+// Funcao recursiva que tenta alcancar um ou mais caracteres apartir de uma posicao.
 // IMPORTANTE: passar uma copia do estado, pois este e alterado.
 bool NumberLink::canConnect(char* stateCopy, int startPosition, char letter, int& numOfHits)
 {    
@@ -116,9 +109,9 @@ bool NumberLink::isDeadState()
 {
     bool isDead = false;
     char* stateCpy = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
-    //std::cout << toString();
     // Testa todas as letras restantes
     const int nextLetterIndex = currentNumber + 1;
+
     for (int i = nextLetterIndex; i < totalNumbers && !isDead; i++)
     {
         if (connected[i])
@@ -127,9 +120,6 @@ bool NumberLink::isDeadState()
         int numOfHits = numbers[i].numOcc;
         isDead = !canConnect(stateCpy, numbers[i].positions[0], numbers[i].upperLetter, numOfHits);
     }
-    //if (isDead)
-        //std::cout << toString();
     delete[] stateCpy;
-
     return isDead;
 }
