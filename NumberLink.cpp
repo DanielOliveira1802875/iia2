@@ -1,9 +1,6 @@
 #include "NumberLink.h"
-#include <limits>
+#include "MinHeap.h"
 #include <cstring>
-#include <algorithm>
-
-#include "MinHeapPtr.h"
 
 
 int NumberLink::outOfBoundsPosition = 0;
@@ -119,7 +116,7 @@ void NumberLink::unmaskAll()
 void NumberLink::setNextConnection()
 {
     // enquanto a distancia manhatan de todos os pontos for maior que zero, ainda faltam conexoes
-    if (HeuristicFunc(pos, posSize) > 0 && currentNumber >= 0 || currentNumber >= totalNumbers)
+    if ((HeuristicFunc(pos, posSize) > 0 && currentNumber >= 0) || currentNumber >= totalNumbers)
         return;
     if (currentNumber >= 0) unmaskAll();    
     currentNumber++;
@@ -268,7 +265,7 @@ void NumberLink::genSuccessors(DLList<Node*>& successors)
                 delete successor; 
             else
             {
-                updateSuccessorStats(successor);
+                updateSuccessorStats(successor);                
                 successors.addToTail((Node*)successor);
             }
         }
@@ -276,17 +273,17 @@ void NumberLink::genSuccessors(DLList<Node*>& successors)
     else
     {   // gera um sucessor para cada posicao adjacente as posicoes conexas e respetivos caminhos
 
-        for (int i = 0; i < posSize; i++)
-        {   // marca todas as posicoes conexas e respetivos caminhos com um caracter diferente  de
-            // forma a evitar que o novo caminho se conecte com as posicoes anteriores
-            if (state[pos[i]] == newPathChar)
-                state[pos[i]] = oldPathChar;
-        }
+        //for (int i = 0; i < posSize; i++)
+        //{   // marca todas as posicoes conexas e respetivos caminhos com um caracter diferente  de
+        //    // forma a evitar que o novo caminho se conecte com as posicoes anteriores
+        //    if (state[pos[i]] == newPathChar)
+        //        state[pos[i]] = oldPathChar;
+        //}
         int succPos[MAXOCC]; // mantem uma lista dos sucessores deste estado, de forama a evitar duplicados
         int succSize = 0;        
         for (int j = 0; j < posSize; j++)
         {
-            if (state[pos[j]] != oldPathChar)
+            if (state[pos[j]] != newPathChar)
                 continue;
             int aroundPos[4];
             setPosAround(pos[j], aroundPos);            
@@ -302,7 +299,8 @@ void NumberLink::genSuccessors(DLList<Node*>& successors)
                 {
                     updateSuccessorStats(successor);
                     successors.addToTail((Node*)successor);
-                    succPos[succSize++] = aroundPos[i];
+                    //std::cout << successor->toString();
+                    //succPos[succSize++] = aroundPos[i];
                 }
             }
         }
@@ -356,11 +354,6 @@ bool NumberLink::operator<=(Node& node)
 void NumberLink::loadInstace(int number)
 {
     priority = Priority::cost;
-    /*if(state != nullptr)
-    {
-        delete[] state;
-        state = nullptr;
-    }*/
     const char inst1[] = "AB.....AB";
     const char inst2[] = "A......B...........AB.BA";
     const char inst3[] = "C........C.........BB.........A........A";
@@ -475,7 +468,7 @@ void NumberLink::loadInstace(int number)
         numbers[i].upperLetter = static_cast<char>(A + i);
         numbers[i].lowerLetter = static_cast<char>(a + i);
         numbers[i].numOcc = 0;
-        memset(numbers[i].positions, outOfBoundsPosition, MAXOCC);
+        memset(numbers[i].positions, outOfBoundsPosition, MAXOCC* sizeof(int));
         numbers[i].numHeuristic = 0;
         connected[i] = true;
     }

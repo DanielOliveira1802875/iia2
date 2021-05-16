@@ -1,5 +1,4 @@
 #pragma once
-#include "MinHeap.h"
 #include "Node.h"
 
 // Numero maximo de ocurrencias de um numero e pontos das respetivas conexoes

@@ -4,7 +4,10 @@
 
 int main()
 {
-
+    /*NumberLink* state = new NumberLink(6);
+    Search search(state);
+    search.bestFS();
+    delete state;*/
     for (int i = 1; i < 11; i++)
     {   // Best first search
         std::cout << "################################\n";

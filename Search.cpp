@@ -61,12 +61,16 @@ void Search::printStats(Node* node)
         else 
             std::cout << node->toString();
         std::cout << "\nSolucao encontrada\n";
+        std::cout << "Numero de avaliacoes: " << totExpansions << std::endl;
+        std::cout << "Numero de geracoes:  " << totGenerations << std::endl;
         std::cout << "Custo da Solucao:    " << node->cost << std::endl;
     }
-    else    
+    else
+    {
         std::cout << "\nSolucao nao encontrada\n";       
-    std::cout << "Numero de expancoes: " << totExpansions << std::endl;
-    std::cout << "Numero de geracoes:  " << totGenerations << std::endl;
+        std::cout << "Numero de avaliacoes: " << totExpansions << std::endl;
+        std::cout << "Numero de geracoes:  " << totGenerations << std::endl;
+    }
 }
 
 

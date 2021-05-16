@@ -1,4 +1,5 @@
 #include "NumberLink.h"
+#include <cstring>
 
 std::string NumberLink::toString()
 {
