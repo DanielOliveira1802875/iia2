@@ -31,17 +31,15 @@ std::string NumberLink::toString(char* state_)
     return returnValue;
 }
 
-// Verifica se o caminho esta em contacto com ele proprio
 bool NumberLink::isSelfConnectingPath()
 {
     int count = 0;
     for (int i = 0; i < 4; ++i)
-        if (state[aroundPathHead[i]] == newPathChar || state[aroundPathHead[i]] == oldPathChar)
+        if (state[aroundPathHead[i]] == maskChar)
             count++;
     return count > 1;
 }
 
-// Verifica se o caminho faz curva de 360, com 1 espaco de intervalo (tipo U)
 bool NumberLink::is360()
 {
     bool flag = false;
@@ -52,36 +50,33 @@ bool NumberLink::is360()
         int nextPosition;
         int discard;
         // verifica verticalmente
-        if (*look(Direction::left, aroundPathHead[i], state, discard) == newPathChar &&
-            *look(Direction::right, aroundPathHead[i], state, discard) == newPathChar)
+        if (*look(Direction::left, aroundPathHead[i], state, discard) == maskChar &&
+            *look(Direction::right, aroundPathHead[i], state, discard) == maskChar)
         {
-            if ((*look(Direction::down, aroundPathHead[i], state, nextPosition) == newPathChar &&
-                 *look(Direction::left, nextPosition, state, discard) == newPathChar &&
-                 *look(Direction::right, nextPosition, state, discard) == newPathChar) ||
-                (*look(Direction::up, aroundPathHead[i], state, nextPosition) == newPathChar &&
-                 *look(Direction::left, nextPosition, state, discard) == newPathChar &&
-                 *look(Direction::right, nextPosition, state, discard) == newPathChar))
+            if ((*look(Direction::down, aroundPathHead[i], state, nextPosition) == maskChar &&
+                 *look(Direction::left, nextPosition, state, discard) == maskChar &&
+                 *look(Direction::right, nextPosition, state, discard) == maskChar) ||
+                (*look(Direction::up, aroundPathHead[i], state, nextPosition) == maskChar &&
+                 *look(Direction::left, nextPosition, state, discard) == maskChar &&
+                 *look(Direction::right, nextPosition, state, discard) == maskChar))
                 flag = true;
         }
         // verifica horizontalmente
-        else if (*look(Direction::up, aroundPathHead[i], state, discard) == newPathChar &&
-                 *look(Direction::down, aroundPathHead[i], state, discard) == newPathChar)
+        else if (*look(Direction::up, aroundPathHead[i], state, discard) == maskChar &&
+                 *look(Direction::down, aroundPathHead[i], state, discard) == maskChar)
         {
-            if ((*look(Direction::left, aroundPathHead[i], state, nextPosition) == newPathChar &&
-                 *look(Direction::up, nextPosition, state, discard) == newPathChar &&
-                 *look(Direction::down, nextPosition, state, discard) == newPathChar) ||
-                (*look(Direction::right, aroundPathHead[i], state, nextPosition) == newPathChar &&
-                 *look(Direction::up, nextPosition, state, discard) == newPathChar &&
-                 *look(Direction::down, nextPosition, state, discard) == newPathChar))
+            if ((*look(Direction::left, aroundPathHead[i], state, nextPosition) == maskChar &&
+                 *look(Direction::up, nextPosition, state, discard) == maskChar &&
+                 *look(Direction::down, nextPosition, state, discard) == maskChar) ||
+                (*look(Direction::right, aroundPathHead[i], state, nextPosition) == maskChar &&
+                 *look(Direction::up, nextPosition, state, discard) == maskChar &&
+                 *look(Direction::down, nextPosition, state, discard) == maskChar))
                 flag = true;
         }
     }
     return flag;
 }
 
-
-// Funcao recursiva que tenta alcancar um ou mais caracteres apartir de uma posicao.
-// IMPORTANTE: passar uma copia do estado, pois este e alterado.
 bool NumberLink::canConnect(char* stateCopy, int startPosition, char letter, int& numOfHits)
 {    
     if (stateCopy[startPosition] == letter)
@@ -104,8 +99,6 @@ bool NumberLink::canConnect(char* stateCopy, int startPosition, char letter, int
     return false;
 }
 
-
-// Verifica se e possivel conectar as restantes letras
 bool NumberLink::isDeadState()
 {
     bool isDead = false;

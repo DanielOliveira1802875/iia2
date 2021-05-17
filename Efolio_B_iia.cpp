@@ -8,8 +8,10 @@ int main()
     Search search(state);
     search.bestFS();
     delete state;*/
+
+    // Best first search
     for (int i = 1; i < 11; i++)
-    {   // Best first search
+    {   
         std::cout << "################################\n";
         std::cout << "INSTANCIA " << i << std::endl;
         std::cout << "Algoritmo Best First Search\n";
@@ -20,8 +22,9 @@ int main()
         search.bestFS();
         delete state;
     }
+    // A* sem Limite
     for(int i = 1; i < 11; i++)
-    {   // A* sem Limite
+    {   
         std::cout << "################################\n";
         std::cout << "INSTANCIA " << i  <<std::endl;
         std::cout << "Algoritmo A*\n";
@@ -32,8 +35,9 @@ int main()
         search.aStar();
         delete state;
     }
+    // A* Limitado (300)
     for (int i = 1; i < 11; i++)
-    {   // A* Limitado (300)
+    {   
         std::cout << "################################\n";
         std::cout << "INSTANCIA " << i << std::endl;
         std::cout << "Algoritmo A*\n";

@@ -13,7 +13,7 @@ class Search
     // lista de nodes expandidas
     DLList<Node*> closed;
     // Para localizar duplicados de forma mais rapida, a chave é uma string, usar (node->toString).
-    // IMPORTANTE: nao utilizar com DFS limitado, pode levar a que não se encontre uma solução.
+    // IMPORTANTE: nao utilizar com profundidade limitada, pode levar a que não se encontre uma solução.
     HashTable<Node*>* knownStates;
 
     int totGenerations;

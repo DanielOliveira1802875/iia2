@@ -16,7 +16,6 @@ class MinHeap
     void bubbleDown(int index);
     void bubbleUp(int index);
     bool isValidIndex(int index);
-    bool isPointer;
 public:
     void addValue(T value);
     T removeMin();

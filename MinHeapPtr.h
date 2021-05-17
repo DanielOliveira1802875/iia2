@@ -16,15 +16,14 @@ class MinHeapPtr
     void bubbleDown(int index);
     void bubbleUp(int index);
     bool isValidIndex(int index);
-    bool isPointer;
     int maxSize; // Por defeito é -1 (Sem limite)
 public:
-    void setMaxSize(int max_size) { maxSize = max_size; }
+    void setMaxSize(int max_size = -1) { maxSize = max_size; }
     void addValue(T value);
     T removeMin();
     T peekMin();
-    bool isEmpty();    
-    MinHeapPtr();
+    bool isEmpty(); 
+    MinHeapPtr(int max_size = -1);
     void clear();
     ~MinHeapPtr();
 
@@ -154,13 +153,12 @@ void MinHeapPtr<T>::bubbleUp(int index)
 }
 
 template <class T>
-MinHeapPtr<T>::MinHeapPtr()
+MinHeapPtr<T>::MinHeapPtr(int max_size)
 {
-    isPointer = std::is_pointer<T>::value;
     capacity = 10;
     size = 0;
     array = new T[10];
-    maxSize = -1;
+    maxSize = max_size;
 }
 
 template <class T>

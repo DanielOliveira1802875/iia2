@@ -13,17 +13,8 @@ Priority Node::priority;
 
 NumberLink::NumberLink()
 {
-    pathHead = posSize = currentNumber = 0;
+    pathHead = currPosSize = currentNumber = 0;
     state = nullptr;
-}
-
-template <class T>
-bool NumberLink::inArray(T* arr, int size, T value)
-{
-    for (int i = 0; i < size; ++i)
-        if (arr[i] == value)
-            return true;
-    return false;
 }
 
 void NumberLink::moveTo(int position)
@@ -31,12 +22,11 @@ void NumberLink::moveTo(int position)
     if (isOutOfBounds(position))
         throw std::invalid_argument("NumberLink::moveTo() Posicao invalida!");
     pathHead = position;
-    state[position] = newPathChar;
+    state[position] = maskChar;
     setPosAround(pathHead, aroundPathHead);
-    if (inArray(pos, posSize, position))
+    if (inArray(currentPositions, currPosSize, position))
         return;
-    pos[posSize++] = position;
-    //posSize++;
+    currentPositions[currPosSize++] = position;
 }
 
 
@@ -92,8 +82,8 @@ Node* NumberLink::getClone()
     memcpy(newState->state, state, static_cast<size_t>(outOfBoundsPosition) + 2);
     memcpy(newState->aroundPathHead, aroundPathHead, sizeof(int) * 4);
     memcpy(newState->connected, connected, sizeof(bool) * totalNumbers);
-    memcpy(newState->pos, pos, sizeof(int) * MAXOCC);
-    newState->posSize = posSize;
+    memcpy(newState->currentPositions, currentPositions, sizeof(int) * MAXOCC);
+    newState->currPosSize = currPosSize;
     newState->pathHead = pathHead;
     newState->currentNumber = currentNumber;
 
@@ -101,33 +91,33 @@ Node* NumberLink::getClone()
 }
 
 
-void NumberLink::unmaskAll()
+void NumberLink::unmask()
 {
     connected[currentNumber] = true;
-    for (int i = 0; i < posSize; i++)
+    for (int i = 0; i < currPosSize; i++)
     {
         if (i < numbers[currentNumber].numOcc)
-            state[pos[i]] = numbers[currentNumber].upperLetter;
+            state[currentPositions[i]] = numbers[currentNumber].upperLetter;
         else
-            state[pos[i]] = numbers[currentNumber].lowerLetter;
+            state[currentPositions[i]] = numbers[currentNumber].lowerLetter;
     }
 }
 
 void NumberLink::setNextConnection()
 {
     // enquanto a distancia manhatan de todos os pontos for maior que zero, ainda faltam conexoes
-    if ((HeuristicFunc(pos, posSize) > 0 && currentNumber >= 0) || currentNumber >= totalNumbers)
+    if ((HeuristicFunc(currentPositions, currPosSize) > 0 && currentNumber >= 0) || currentNumber >= totalNumbers)
         return;
-    if (currentNumber >= 0) unmaskAll();    
+    if (currentNumber >= 0) unmask();    
     currentNumber++;
     for (; currentNumber < totalNumbers; currentNumber++)
-    {   // Procura o proximo numero, e prepara a proxima conexa
+    {   // Procura o proximo numero, e prepara a proxima conexao
         if (!connected[currentNumber])
         {
-            memcpy(pos, numbers[currentNumber].positions, MAXOCC);
-            posSize = numbers[currentNumber].numOcc;
+            memcpy(currentPositions, numbers[currentNumber].positions, MAXOCC);
+            currPosSize = numbers[currentNumber].numOcc;
             pathHead = numbers[currentNumber].positions[0];
-            state[pathHead] = newPathChar;
+            state[pathHead] = maskChar;
             setPosAround(pathHead, aroundPathHead);
             return;
         }
@@ -135,13 +125,6 @@ void NumberLink::setNextConnection()
     pathHead = outOfBoundsPosition; // Numeros acabaram
 }
 
-// Calcula a distancia manhattan entre todos os pontos de um numero, 
-// e devolve a soma das menores distancias de forma a que todas os pontos estejam conexos.
-// Uma vez que um caminho pode divergira numa rede, esta funcao
-// nao distingue as ocorrencias dos pontos dos caminhos.
-//
-// Por outro lado, como se podem dar conexoes entre caminhos que ainda nao estao formados
-// esta funcao pode sobre estimar a distancia total.
 int NumberLink::HeuristicFunc(int* positions, int size)
 {    
     // adiciona a uma min heap todas as distancias entre todos os pontos
@@ -156,43 +139,45 @@ int NumberLink::HeuristicFunc(int* positions, int size)
     for (int i = 0; i < MAXOCC; i++)
         islands[i] = i;
 
-    // vai extraido da min heap as distancias menores até que todos os pontos estejam conexos
-    // para o efeito, uso a variavel ilhas, em que as ocurrencias conexas passam a ter o mesmo id.
+    // Vai extraido da min heap as distancias menores até que todos os pontos estejam conexos,
+    // para o efeito, uso o array ilhas, em que as ocurrencias conexas passam a ter o mesmo id.
     // De notar que os pontos conexos tem uma distancia manhattan de 0.
-    while (!connections.isEmpty())
+    int numOfIslands = 0;
+    while (!connections.isEmpty() && numOfIslands != 1)
     {
         const Connection conn = connections.removeMin();
+        // Se as ilhas ja se encontram conexas, pode avancar para a proxima conexao.
         if (islands[conn.element1] == islands[conn.element2])
-            continue; // estas ilhas ja se encontram conexas, pode avancar.
+            continue; 
         // nova conexao, todas as ilhas conexas passam a ter o mesmo id [ X-X-X + Y-Y ] -> [ X-X-X-X-X ]
-        const int mergedIsland = islands[conn.element2];
+        const int mainIsland = islands[conn.element1];
+        const int mergeIsland = islands[conn.element2];        
         for (int i = 0; i < size; ++i)
-            if (islands[i] == mergedIsland)
-                islands[i] = islands[conn.element1];
+            if (islands[i] == mergeIsland)
+                islands[i] = mainIsland;
         totalManhattanDistance += conn.distance;
-        // verifica quantas ilhas existem no total, caso exista so uma, termina a funcao
+        // verifica quantas ilhas existem no total, caso exista so uma, termina o ciclo
         const int island = islands[0];
-        int numOfIslands = 1;
+        numOfIslands = 1;
         for (int i = 1; i < size && numOfIslands == 1; ++i)
             if (islands[i] != island)
                 numOfIslands++;
-        if (numOfIslands == 1)
-            break;
     }
     delete[] islands;
-    return totalManhattanDistance;
+    if(totalManhattanDistance <= 1)
+        return totalManhattanDistance;
+    return static_cast<int>(ceil(static_cast<double>(totalManhattanDistance) * 0.75));
 }
 
 NumberLink::NumberLink(int instance)
 {
     qntColumns = qntLines = outOfBoundsPosition =  0;
-    pathHead = posSize = currentNumber = 0;
+    pathHead = currPosSize = currentNumber = 0;
     state = nullptr;
     loadInstace(instance);
 }
 
 NumberLink::~NumberLink() { delete[] state; }
-
 
 bool NumberLink::operator==(Node& node) { return strcmp(state, ((NumberLink&)node).state) == 0; }
 
@@ -220,7 +205,7 @@ int NumberLink::calcManhattanDistance(int startPosition, int endPosition)
 }
 
 int NumberLink::remainingHeuristics()
-{
+{   // devolve a soma do valor heuristico dos restantes numeros
     int returnValue = 0;
     for (int i = currentNumber + 1; i < 26; i++)
         returnValue += numbers[i].numHeuristic;
@@ -231,8 +216,8 @@ int NumberLink::remainingHeuristics()
 void NumberLink::updateSuccessorStats(NumberLink* successor)
 {
     if (priority == Priority::cost) return;
-    const int thisNumHeuristics = HeuristicFunc(successor->pos, successor->posSize);
-    successor->heuristic = thisNumHeuristics  + remainingHeuristics();
+    const int thisNumHeuristic = HeuristicFunc(successor->currentPositions, successor->currPosSize);
+    successor->heuristic = thisNumHeuristic  + remainingHeuristics();
 }
 
 
@@ -248,12 +233,11 @@ bool NumberLink::isConnected()
     return connections;
 }
 
-// Gera os sucessores
 void NumberLink::genSuccessors(DLList<Node*>& successors)
 {
     setNextConnection();
     if (!isConnected())
-    { // Gera os sucessores adjacentes a pathHead, maximo de 3 sucessores
+    {   // Gera os sucessores adjacentes a pathHead, maximo de 3 sucessores
         for (int i = 0; i < 4; i++)
         {
             if (state[aroundPathHead[i]] != '.')
@@ -272,24 +256,16 @@ void NumberLink::genSuccessors(DLList<Node*>& successors)
     }
     else
     {   // gera um sucessor para cada posicao adjacente as posicoes conexas e respetivos caminhos
-
-        //for (int i = 0; i < posSize; i++)
-        //{   // marca todas as posicoes conexas e respetivos caminhos com um caracter diferente  de
-        //    // forma a evitar que o novo caminho se conecte com as posicoes anteriores
-        //    if (state[pos[i]] == newPathChar)
-        //        state[pos[i]] = oldPathChar;
-        //}
-        int succPos[MAXOCC]; // mantem uma lista dos sucessores deste estado, de forama a evitar duplicados
-        int succSize = 0;        
-        for (int j = 0; j < posSize; j++)
+       
+        for (int j = 0; j < currPosSize; j++)
         {
-            if (state[pos[j]] != newPathChar)
+            if (state[currentPositions[j]] != maskChar)
                 continue;
             int aroundPos[4];
-            setPosAround(pos[j], aroundPos);            
+            setPosAround(currentPositions[j], aroundPos);            
             for (int i = 0; i < 4; i++)
             {
-                if (state[aroundPos[i]] != '.' || inArray(succPos, succSize, aroundPos[i]))
+                if (state[aroundPos[i]] != '.')
                     continue;
                 NumberLink* successor = (NumberLink*)getClone();
                 successor->moveTo(aroundPos[i]);
@@ -299,8 +275,6 @@ void NumberLink::genSuccessors(DLList<Node*>& successors)
                 {
                     updateSuccessorStats(successor);
                     successors.addToTail((Node*)successor);
-                    //std::cout << successor->toString();
-                    //succPos[succSize++] = aroundPos[i];
                 }
             }
         }
@@ -349,8 +323,15 @@ bool NumberLink::operator<=(Node& node)
     return false;
 }
 
+template <class T>
+bool NumberLink::inArray(T* arr, int size, T value)
+{
+    for (int i = 0; i < size; ++i)
+        if (arr[i] == value)
+            return true;
+    return false;
+}
 
-// Inicia todos os atributos referentes a uma instancia e prepara-se para conetar a letra A
 void NumberLink::loadInstace(int number)
 {
     priority = Priority::cost;
@@ -361,16 +342,9 @@ void NumberLink::loadInstace(int number)
     const char inst5[] = "..........A.B.A.B...........B.A.B.A..........";
     const char inst6[] = ".A.A....AB.B.B..........................A.A.A.....B.B.B.....";
     const char inst7[] = "A........GB..A.H...H...B.G.......C.F.......D.E.......................ECD.......F";
-    const char inst8[] =
-        "D.............D..C.....A...........B...............C.....A..............AB...B.......C......D.......";
-    const char inst9[] =
-        "........A.............A...................................A.A.................................A.....";
-    const char inst10[] =
-        "...........BABABABA............ABABABAB......................BABABABA............ABABABAB...........";
-    const char inst11[] =
-        "..........A..BA.HI..........I....G..F.E...F..H..JCBE........C.....G.J.D..................D..........";
-    const char inst12[] =
-        "AD............C..H...E......B.B.H..............................G........GF.....................A....D...F...E....C.......";
+    const char inst8[] = "D.............D..C.....A...........B...............C.....A..............AB...B.......C......D.......";
+    const char inst9[] = "........A.............A...................................A.A.................................A.....";
+    const char inst10[] = "...........BABABABA............ABABABAB......................BABABABA............ABABABAB...........";
     switch (number)
     {
     case 1:
@@ -442,20 +416,6 @@ void NumberLink::loadInstace(int number)
         outOfBoundsPosition = qntColumns * qntLines;
         this->state = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
         memcpy(state, inst10, static_cast<size_t>(outOfBoundsPosition));
-        break;
-    case 11:
-        qntLines = 10;
-        qntColumns = 10;
-        outOfBoundsPosition = qntColumns * qntLines;
-        this->state = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
-        memcpy(state, inst11, static_cast<size_t>(outOfBoundsPosition));
-        break;
-    case 12:
-        qntLines = 11;
-        qntColumns = 11;
-        outOfBoundsPosition = qntColumns * qntLines;
-        this->state = new char[static_cast<size_t>(outOfBoundsPosition) + 2];
-        memcpy(state, inst12, static_cast<size_t>(outOfBoundsPosition));
         break;
     default:
         throw std::invalid_argument("NumberLink::loadInstace() A instancia nao existe\n");
